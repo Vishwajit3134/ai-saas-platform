@@ -11,10 +11,9 @@ const supabase = require('../config/supabaseClient');
 
 // Helper function to check and deduct credits
 const checkAndDeductCredits = async (userId, serviceName, cost) => {
-    // 1. Get the user's current credits from the 'profiles' table
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('credits')
+        .select('credits, role') // Also select the user's role
         .eq('id', userId)
         .single();
 
@@ -22,12 +21,17 @@ const checkAndDeductCredits = async (userId, serviceName, cost) => {
         throw new Error('Could not find user profile.');
     }
 
-    // 2. Check if the user has enough credits
+    // If the user is an admin, bypass the credit check completely
+    if (profile.role === 'admin') {
+        console.log(`Admin user ${userId} used ${serviceName}. No credits deducted.`);
+        return true;
+    }
+
     if (profile.credits < cost) {
         throw new Error('Insufficient credits. Please upgrade your plan.');
     }
 
-    // 3. Deduct the credits
+    // Deduct credits for regular users
     const newCredits = profile.credits - cost;
     const { error: updateError } = await supabase
         .from('profiles')
@@ -38,27 +42,25 @@ const checkAndDeductCredits = async (userId, serviceName, cost) => {
         throw new Error('Failed to update user credits.');
     }
     
-    // 4. Log the transaction in the 'transactions' table for record-keeping
+    // Log the transaction for regular users
     const { error: transactionError } = await supabase
         .from('transactions')
         .insert({ user_id: userId, service_used: serviceName, credits_spent: cost });
         
     if (transactionError) {
-        // This is not a fatal error for the user, so we just log it on the server
         console.error('Failed to log transaction:', transactionError.message);
     }
 
-    return true; // Indicate success
+    return true;
 };
 
 
 const generateImage = async (req, res) => {
     const { prompt } = req.body;
-    const userId = req.user.id; // Get user ID from the authentication middleware
-    const creditCost = 2; // Set the cost for this service
+    const userId = req.user.id;
+    const creditCost = 2;
 
     try {
-        // Check and deduct credits before making the expensive API call
         await checkAndDeductCredits(userId, 'Text to Image', creditCost);
 
         const engineId = 'stable-diffusion-xl-1024-v1-0';

@@ -1,7 +1,6 @@
 const supabase = require('../config/supabaseClient');
 
 // @route   POST api/auth/register
-// @desc    Register a new user
 const registerUser = async (req, res) => {
     const { email, password } = req.body;
 
@@ -16,13 +15,14 @@ const registerUser = async (req, res) => {
         });
 
         if (error) {
+            console.error("Supabase registration error:", error.message);
             return res.status(400).json({ error: error.message });
         }
         
-        // Supabase sends a confirmation email. The user is in the system but needs to confirm.
         res.status(201).json({ message: 'Registration successful! Please check your email to confirm your account.', user: data.user });
 
     } catch (error) {
+        console.error("Server error during registration:", error);
         res.status(500).json({ error: 'Server error during registration.' });
     }
 };
@@ -43,12 +43,15 @@ const loginUser = async (req, res) => {
         });
 
         if (error) {
+            // This will print the exact Supabase error to your Render logs
+            console.error("Supabase login error:", error.message);
             return res.status(400).json({ error: error.message });
         }
 
         res.json({ message: 'Login successful!', session: data.session, user: data.user });
 
     } catch (error) {
+        console.error("Server error during login:", error);
         res.status(500).json({ error: 'Server error during login.' });
     }
 };

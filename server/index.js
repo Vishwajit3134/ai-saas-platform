@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); // 1. Import the cors package
+const cors = require('cors');
 const supabase = require('./config/supabaseClient');
 
 // Import all route files
@@ -8,23 +8,21 @@ const authRoutes = require('./routes/authRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const userRoutes = require('./routes/userRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const adminRoutes = require('./routes/adminRoutes'); // 1. Import the new admin routes
 
 const app = express();
 
 // --- Middleware ---
+app.use(cors());
 
-// 2. Enable CORS for all incoming requests from any origin.
-// This is the solution for the "fetch failed" / "Network Error".
-app.use(cors()); 
-
-// 3. This is a conditional body parser for security.
-// If the request is for the Razorpay webhook, it uses a raw body parser.
-// For all other requests, it uses the standard JSON parser.
-// This is critical for the webhook's signature verification to work.
+// This is a conditional body parser for security.
+// It is critical for the Razorpay webhook's signature verification to work.
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/payment/webhook') {
+    // For the webhook, we need the raw body
     express.raw({ type: 'application/json' })(req, res, next);
   } else {
+    // For all other routes, parse JSON
     express.json()(req, res, next);
   }
 });
@@ -35,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/admin', adminRoutes); // 2. Use the new admin routes
 
 
 // --- Server Start ---
