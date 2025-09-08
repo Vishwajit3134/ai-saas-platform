@@ -1,0 +1,14 @@
+# Dependencies
+/node_modules
+/client/node_modules
+/server/node_modules
+
+# Environment files with secret keys
+.env
+/server/.env
+
+# Build output
+/client/dist
+
+# Log files
+npm-debug.log*
