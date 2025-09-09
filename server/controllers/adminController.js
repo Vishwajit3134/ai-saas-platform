@@ -4,18 +4,20 @@ const supabase = require('../config/supabaseClient');
 // @desc    Get all users for the admin dashboard
 const getAllUsers = async (req, res) => {
     try {
-        // This is an admin-level function to get all users from the auth table
+        // First, get all users from the Supabase auth system.
+        // This requires the SERVICE_ROLE_KEY to be correctly set up.
         const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
         if (authError) throw authError;
 
-        // Now get the corresponding profiles to fetch credits and roles
+        // Next, get all the corresponding profiles from your public table
+        // to fetch their credits and roles.
         const { data: profiles, error: profileError } = await supabase
             .from('profiles')
             .select('id, email, credits, role');
         
         if (profileError) throw profileError;
 
-        // Combine the data for a complete user list
+        // Combine the two data sources to create a complete user list for the admin dashboard.
         const combinedUsers = users.map(user => {
             const profile = profiles.find(p => p.id === user.id);
             return {
@@ -38,9 +40,9 @@ const getAllUsers = async (req, res) => {
 const deleteUser = async (req, res) => {
     const { id } = req.params;
     try {
-        // This is a special admin function to delete a user from the auth system.
-        // The user's profile in the `profiles` table will be deleted automatically
-        // if you have set up a cascading delete in your database.
+        // This is a special admin-level function to delete a user from the auth system.
+        // The user's data in the `profiles` table will be deleted automatically
+        // if you have set up a cascading delete in your database schema.
         const { error } = await supabase.auth.admin.deleteUser(id);
         if (error) throw error;
         

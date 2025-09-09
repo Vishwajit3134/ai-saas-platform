@@ -11,6 +11,7 @@ const supabase = require('../config/supabaseClient');
 
 // Helper function to check and deduct credits
 const checkAndDeductCredits = async (userId, serviceName, cost) => {
+    // 1. Get the user's current credits and role from the 'profiles' table
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('credits, role') // Also select the user's role
@@ -21,17 +22,18 @@ const checkAndDeductCredits = async (userId, serviceName, cost) => {
         throw new Error('Could not find user profile.');
     }
 
-    // If the user is an admin, bypass the credit check completely
+    // 2. If the user is an admin, bypass the credit check completely
     if (profile.role === 'admin') {
         console.log(`Admin user ${userId} used ${serviceName}. No credits deducted.`);
-        return true;
+        return true; // Grant free access
     }
-
+    
+    // 3. For regular users, check if they have enough credits
     if (profile.credits < cost) {
         throw new Error('Insufficient credits. Please upgrade your plan.');
     }
 
-    // Deduct credits for regular users
+    // 4. Deduct the credits for regular users
     const newCredits = profile.credits - cost;
     const { error: updateError } = await supabase
         .from('profiles')
@@ -42,16 +44,17 @@ const checkAndDeductCredits = async (userId, serviceName, cost) => {
         throw new Error('Failed to update user credits.');
     }
     
-    // Log the transaction for regular users
+    // 5. Log the transaction for the regular user
     const { error: transactionError } = await supabase
         .from('transactions')
         .insert({ user_id: userId, service_used: serviceName, credits_spent: cost });
         
     if (transactionError) {
+        // This is not a fatal error for the user, so we just log it on the server
         console.error('Failed to log transaction:', transactionError.message);
     }
 
-    return true;
+    return true; // Indicate success
 };
 
 

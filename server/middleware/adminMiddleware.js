@@ -26,3 +26,4 @@ const requireAdmin = async (req, res, next) => {
 };
 
 module.exports = requireAdmin;
+
