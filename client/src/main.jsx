@@ -90,7 +90,7 @@ const AuthProvider = ({ children }) => {
         setProfile(null);
     };
 
-    const value = { session, profile, logout, isAuthenticated: !!session, fetchProfile };
+    const value = { session, profile, logout, isAuthenticated: !!session, fetchProfile, loading };
 
     return (
         <AuthContext.Provider value={value}>
@@ -340,18 +340,15 @@ const Register = () => {
 };
 
 
-const Dashboard = () => { /* ... (Same as before) ... */ };
-const DemoPage = () => { /* ... (Same as before) ... */ };
-const TextToImage = () => { /* ... (Same as before) ... */ };
-const ResumeAnalyzer = () => { /* ... (Same as before) ... */ };
-const BackgroundRemover = () => { /* ... (Same as before) ... */ };
-const PricingPage = () => { /* ... (Same as before) ... */ };
-const ProfilePage = () => { /* ... (Same as before) ... */ };
+const Dashboard = () => { return <div>Dashboard</div>; };
+const DemoPage = () => { return <div>Demo Page</div>; };
+const TextToImage = () => { return <div>Text to Image</div>; };
+const ResumeAnalyzer = () => { return <div>Resume Analyzer</div>; };
+const BackgroundRemover = () => { return <div>Background Remover</div>; };
+const PricingPage = () => { return <div>Pricing Page</div>; };
+const ProfilePage = () => { return <div>Profile Page</div>; };
+const AdminDashboard = () => { return <div>Admin Dashboard</div>; };
 
-
-const AdminDashboard = () => {
-    // ... AdminDashboard component logic ...
-};
 
 const Navbar = () => {
     const { isAuthenticated, logout, profile } = useAuth();
@@ -392,11 +389,14 @@ const Navbar = () => {
 // --- Main App Component ---
 function App() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
     
   useEffect(() => {
-    // This is now handled by the AuthProvider's onAuthStateChange
-  }, [isAuthenticated, navigate]);
+      // After initial load, if user is authenticated, redirect to dashboard
+      if(!loading && isAuthenticated) {
+          navigate('/dashboard', { replace: true });
+      }
+  }, [isAuthenticated, loading, navigate]);
 
   return (
     <div className="App">
